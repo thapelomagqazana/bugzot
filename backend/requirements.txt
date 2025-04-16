@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+psycopg2-binary
+sqlalchemy
+python-dotenv
+passlib[bcrypt]
+python-jose[cryptography]
+alembic
+pydantic[email]
+pytest
+httpx
+pytest-asyncio
+uuid
+motor
+pymongo
+pydantic-settings
+fastapi[all]

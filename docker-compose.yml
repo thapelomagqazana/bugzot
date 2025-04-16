@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  # Backend (FastAPI)
+  backend:
+    build: ./backend
+    container_name: fastapi_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+    networks:
+      - app_network
+
+  # Database (PostgreSQL)
+  db:
+    image: postgres:15
+    container_name: fastapi_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: fastapi_user
+      POSTGRES_PASSWORD: fastapi_pass
+      POSTGRES_DB: fastapi_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  # Frontend (React + Vite + TypeScript)
+  frontend:
+    build: ./frontend
+    container_name: vite_react_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge

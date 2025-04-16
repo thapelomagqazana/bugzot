@@ -1,0 +1,37 @@
+# Python
+backend/env/
+backend/**/__pycache__/
+backend/.env
+backend/logs
+backend/.venv/
+backend/**/.mypy_cache/
+backend/**/.pytest_cache/
+backend/.vscode/
+backend/.DS_Store
+backend/alembic/versions/*.pyc
+# Ignore database files (for local SQLite, if used)
+backend/*.db
+backend/instance/
+backend/migrations/versions/*.pyc  # Ignore compiled migration scripts only
+
+# Node.js / Vite
+frontend/node_modules/
+frontend/.env
+frontend/.vite/
+frontend/dist/
+frontend/.DS_Store
+
+# Logs
+*.log
+
+# System
+.DS_Store
+Thumbs.db
+
+# SQLite (if used temporarily)
+*.sqlite3
+
+# Test coverage
+htmlcov/
+.coverage
+coverage.xml
