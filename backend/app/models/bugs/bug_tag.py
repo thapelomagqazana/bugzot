@@ -1,11 +1,16 @@
-from sqlalchemy import Column, Integer, ForeignKey
+"""Defines the association model between bugs and tags for
+many-to-many relationships.
+"""
+
+from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 
+
 class BugTag(Base):
-    """
-    Association table for many-to-many relationship between Bugs and Tags.
-    """
+    """Association table for many-to-many relationship between Bugs and Tags."""
+
     __tablename__ = "bug_tags"
 
     id = Column(Integer, primary_key=True)

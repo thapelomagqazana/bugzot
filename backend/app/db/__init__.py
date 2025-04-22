@@ -1,10 +1,13 @@
-"""
-Database connection setup for SQLAlchemy with PostgreSQL.
+"""Database connection setup for SQLAlchemy with PostgreSQL.
+
 Provides session and engine objects to be reused throughout the app.
 """
+
 import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 from app.core import get_settings
 
 # Load application settings (uses Pydantic-based config)
@@ -16,14 +19,14 @@ engine = create_engine(
     pool_pre_ping=True,     # Helps avoid stale DB connections
     pool_size=10,           # Recommended baseline for production
     max_overflow=20,        # Burst capacity
-    future=True             # Ensures 2.0-style behavior
+    future=True,             # Ensures 2.0-style behavior
 )
 
 # Reusable session factory for dependency injection and CRUD
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
-    bind=engine
+    bind=engine,
 )
 
 # --- Optional Testing Setup (for pytest) ---
@@ -34,7 +37,7 @@ test_engine = create_engine(
     pool_pre_ping=True,     # Helps avoid stale DB connections
     pool_size=10,           # Recommended baseline for production
     max_overflow=20,        # Burst capacity
-    future=True             # Ensures 2.0-style behavior
+    future=True,             # Ensures 2.0-style behavior
 )
 
 TestingSessionLocal = sessionmaker(

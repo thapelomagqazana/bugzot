@@ -1,11 +1,13 @@
+"""Defines shared base settings for all environments using Pydantic."""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class BaseConfig(BaseSettings):
-    """
-    Shared base configuration for all environments.
+    """Base settings shared across environments.
 
     Inherits from Pydantic's BaseSettings to support environment variable loading.
-    This class defines all core variables used across development, staging, and production.
+    Defines all core variables used across development, staging, and production.
     """
 
     # Application metadata
@@ -33,5 +35,6 @@ class BaseConfig(BaseSettings):
     JWT_ALGORITHM: str
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int
 
-    # Tells Pydantic to treat values as case-sensitive and load from UTF-8 encoded `.env` files
+    # Tells Pydantic to treat values as case-sensitive
+    # and load from UTF-8 encoded `.env` files
     model_config = SettingsConfigDict(env_file_encoding="utf-8")

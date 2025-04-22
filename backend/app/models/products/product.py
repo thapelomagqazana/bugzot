@@ -1,11 +1,23 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, Index, ForeignKey
+"""SQLAlchemy model for a product entity."""
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    func,
+)
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 
 
 class Product(Base):
-    """
-    Represents a top-level software product managed by the organization.
+    """Represents a top-level software product managed by the organization.
+
     Supports soft deletion, visibility, and metadata tracking.
     """
 
@@ -41,8 +53,6 @@ class Product(Base):
     bugs = relationship("Bug", back_populates="product", cascade="all, delete-orphan", lazy="selectin")
     versions = relationship("Version", back_populates="product", cascade="all, delete-orphan", lazy="selectin")
 
-    def __repr__(self):
-        """
-        Debug representation for use in logs or admin tooling.
-        """
+    def __repr__(self) -> str:
+        """Debug representation for use in logs or admin tooling."""
         return f"<Product id={self.id} name='{self.name}' active={self.is_active}>"

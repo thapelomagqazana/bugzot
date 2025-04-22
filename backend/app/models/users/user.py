@@ -1,13 +1,15 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Index
+"""User model definition and relationships."""
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from app.db.base import Base
 from app.models.users.role import DEFAULT_ROLE_ID
 
 
 class User(Base):
-    """
-    User model storing credentials, roles, metadata, and behavioral tracking.
+    """User model storing credentials, roles, metadata, and behavioral tracking.
 
     Enhancements:
     - last_login and login_attempts for security/throttling
@@ -27,7 +29,13 @@ class User(Base):
     full_name = Column(String, nullable=True)
 
     # Role relationship
-    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False, default=DEFAULT_ROLE_ID)  # Default to 'reporter' role
+    role_id = Column(
+        Integer,
+        ForeignKey("roles.id"),
+        nullable=False,
+        default=DEFAULT_ROLE_ID,
+    )  # Default to 'reporter' role
+
     role = relationship("Role", back_populates="users")
 
     # State flags
@@ -43,14 +51,25 @@ class User(Base):
     login_attempts = Column(Integer, default=0)
 
     # Relationships
-    reported_bugs = relationship("Bug", back_populates="reporter", foreign_keys="Bug.reporter_id", lazy="selectin")
-    assigned_bugs = relationship("Bug", back_populates="assignee", foreign_keys="Bug.assignee_id", lazy="selectin")
+    reported_bugs = relationship(
+        "Bug",
+        back_populates="reporter",
+        foreign_keys="Bug.reporter_id",
+        lazy="selectin",
+    )
+    assigned_bugs = relationship(
+        "Bug",
+        back_populates="assignee",
+        foreign_keys="Bug.assignee_id",
+        lazy="selectin",
+    )
+
     comments = relationship("Comment", back_populates="author", lazy="selectin")
     activation_keys = relationship(
         "ActivationKey",
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="selectin",
     )
 
     # Unique constraint workaround for soft delete
@@ -58,8 +77,6 @@ class User(Base):
         Index("uq_users_email_active", "email", postgresql_where=~is_deleted, unique=True),
     )
 
-    def __repr__(self):
-        """
-        Debug representation for use in logs or admin tooling.
-        """
+    def __repr__(self) -> str:
+        """Return debug representation for logs/admin tools."""
         return f"<User id={self.id} name='{self.full_name}' active={self.is_active}>"

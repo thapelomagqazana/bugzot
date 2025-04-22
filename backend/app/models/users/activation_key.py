@@ -1,14 +1,24 @@
+"""SQLAlchemy model for one-time activation tokens used in account-related workflows."""
+
 from sqlalchemy import (
-    Column, Integer, String, DateTime, ForeignKey, Boolean, Index, UniqueConstraint
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from app.db.base import Base
 
 
 class ActivationKey(Base):
-    """
-    Represents a one-time activation token used for:
+    """Represents a one-time activation token used for user account workflows.
+
     - Email verification during sign-up
     - Password reset flow (if extended)
 
@@ -45,8 +55,6 @@ class ActivationKey(Base):
     # Relationships
     user = relationship("User", back_populates="activation_keys", lazy="joined")
 
-    def __repr__(self):
-        """
-        Debug representation for use in logs or admin tooling.
-        """
+    def __repr__(self) -> str:
+        """Debug representation for use in logs or admin tooling."""
         return f"<ActivationKey id={self.id} key='{self.key}' active={self.is_active}>"

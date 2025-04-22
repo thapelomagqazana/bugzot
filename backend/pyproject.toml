@@ -1,0 +1,21 @@
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+exclude = ["migrations", ".venv", "__pycache__", "alembic"]
+select = ["ALL"]
+ignore = ["D203", "D213", "ANN101", "ANN102", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "E501", "S105"]
+

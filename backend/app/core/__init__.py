@@ -1,23 +1,30 @@
-from functools import lru_cache
+"""Core configuration package for environment-specific settings."""
+
 import os
-from app.core.dev import DevConfig
-from app.core.staging import StagingConfig
-from app.core.prod import ProdConfig
+from functools import lru_cache
 
-@lru_cache()
-def get_settings():
-    """
-    Cached settings loader for current environment.
+from pydantic_settings import BaseSettings
 
-    Automatically determines the current environment and loads the appropriate configuration class.
-    Defaults to development if ENVIRONMENT is not explicitly set.
+@lru_cache
+def get_settings() -> BaseSettings:
+    """Load settings for the current environment (cached).
+
+    Automatically determines the current environment and loads the appropriate
+    configuration class. Defaults to development if ENVIRONMENT is not explicitly set.
+
     Returns:
-        BaseConfig instance with all config fields loaded from relevant .env file.
+        BaseSettings: Instance with all config fields loaded from the correct .env file.
+
     """
     env = os.getenv("ENVIRONMENT", "development").lower()
 
     if env == "production":
+        from app.core.prod import ProdConfig
         return ProdConfig()
-    elif env == "staging":
+
+    if env == "staging":
+        from app.core.staging import StagingConfig
         return StagingConfig()
+
+    from app.core.dev import DevConfig
     return DevConfig()

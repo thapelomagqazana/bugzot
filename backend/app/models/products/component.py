@@ -1,11 +1,24 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, UniqueConstraint, Index, func
+"""SQLAlchemy model for a product component entity."""
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 
 
 class Component(Base):
-    """
-    Represents a functional sub-module of a Product.
+    """Represents a functional sub-module of a Product.
+
     Helps isolate and categorize bugs for better triaging and ownership.
     """
 
@@ -40,8 +53,6 @@ class Component(Base):
         Index("ix_component_name", "name"),
     )
 
-    def __repr__(self):
-        """
-        Debug representation for use in logs or admin tooling.
-        """
+    def __repr__(self) -> str:
+        """Debug representation for use in logs or admin tooling."""
         return f"<Component id={self.id} name='{self.name}' active={self.is_active}>"

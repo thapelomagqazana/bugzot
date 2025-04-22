@@ -1,21 +1,32 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, func, Index
+"""SQLAlchemy model for product categories used for organizing products."""
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    func,
+)
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 
 
 class Category(Base):
-    """
-    Represents a product grouping or classification (e.g., "Dev Tools", "Mobile Apps").
+    """Represents a product grouping or classification.
 
-    Categories help organize large collections of products into logical groups for filtering,
-    reporting, and admin operations. Supports soft deletion, visibility toggles,
-    and audit trails for enterprise usage.
+    Used to organize large collections of products into logical groups
+    (e.g., "Dev Tools", "Mobile Apps") for filtering, reporting, and admin
+    operations. Supports soft deletion, visibility toggles, and audit trails.
     """
 
     __tablename__ = "categories"
     __table_args__ = (
         Index("ix_category_name", "name"),  # Fast lookup by name
-        Index("ix_category_active_name", "is_active", "name"),  # Common dashboard filter
+        Index("ix_category_active_name", "is_active", "name"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -48,11 +59,9 @@ class Category(Base):
         "Product",
         back_populates="category",
         lazy="selectin",  # Efficient loading for frontend grids/lists
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
-    def __repr__(self):
-        """
-        Debug representation for use in logs or admin tooling.
-        """
+    def __repr__(self) -> str:
+        """Debug representation for use in logs or admin tooling."""
         return f"<Category id={self.id} name='{self.name}' active={self.is_active}>"

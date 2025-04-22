@@ -1,14 +1,18 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Index
+"""Defines the Attachment model for storing bug-related files."""
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from app.db.base import Base
 
 
 class Attachment(Base):
-    """
-    Stores file metadata for bug-related attachments (e.g., logs, screenshots, patches).
+    """Stores metadata for bug-related attachments.
+
     Supports versioning, soft deletion, and uploader tracking.
     """
+
     __tablename__ = "attachments"
 
     id = Column(Integer, primary_key=True)
@@ -38,8 +42,6 @@ class Attachment(Base):
         Index("ix_attachment_bug_version", "bug_id", "version"),
     )
 
-    def __repr__(self):
-        """
-        Debug representation for use in logs or admin tooling.
-        """
+    def __repr__(self) -> str:
+        """Debug representation for use in logs or admin tooling."""
         return f"<Attachment id={self.id} filename='{self.filename}' file_path={self.file_path}>"

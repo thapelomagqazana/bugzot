@@ -1,17 +1,16 @@
-import sys
-import os
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config, pool
-from alembic import context
 
 # Load env and models
 from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
+
+from alembic import context
+
 load_dotenv()
 
+from app.core import get_settings
 from app.db.base import Base  # Your declarative base
 from app.models import *  # Import all models to register with metadata
-from app.core import get_settings
 
 config = context.config
 fileConfig(config.config_file_name)
@@ -29,7 +28,7 @@ def run_migrations_offline():
         url=settings.DATABASE_URL,
         target_metadata=target_metadata,
         literal_binds=True,
-        compare_type=True
+        compare_type=True,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -45,7 +44,7 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            compare_type=True
+            compare_type=True,
         )
         with context.begin_transaction():
             context.run_migrations()

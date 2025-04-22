@@ -1,12 +1,15 @@
-from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint, DateTime, Boolean
+"""SQLAlchemy model for RolePermission join table."""
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from app.db.base import Base
 
 
 class RolePermission(Base):
-    """
-    Join table mapping roles to permissions (many-to-many).
+    """Join table mapping roles to permissions (many-to-many).
+
     Includes auditing and soft revocation support.
     """
 
@@ -21,14 +24,19 @@ class RolePermission(Base):
         Integer,
         ForeignKey("roles.id", ondelete="CASCADE", name="fk_rolepermission_role"),
         nullable=False,
-        index=True
+        index=True,
     )
     permission_id = Column(
         Integer,
-        ForeignKey("permissions.id", ondelete="CASCADE", name="fk_rolepermission_permission"),
+        ForeignKey(
+            "permissions.id",
+            ondelete="CASCADE",
+            name="fk_rolepermission_permission",
+        ),
         nullable=False,
-        index=True
+        index=True,
     )
+
 
     # Optional soft revocation
     is_active = Column(Boolean, default=True)

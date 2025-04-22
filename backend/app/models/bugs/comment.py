@@ -1,11 +1,14 @@
-from sqlalchemy import Column, Integer, Text, Boolean, ForeignKey, DateTime, Index, func
+"""Defines the Comment model used for user feedback on bug reports."""
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, Text, func
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 
 
 class Comment(Base):
-    """
-    Represents a threaded comment or discussion message on a bug.
+    """Represents a threaded comment or discussion message on a bug.
+
     Supports visibility, soft deletion, and threading for collaboration.
     """
 
@@ -43,8 +46,6 @@ class Comment(Base):
         Index("ix_comment_visibility", "is_private"),
     )
 
-    def __repr__(self):
-        """
-        Debug representation for use in logs or admin tooling.
-        """
+    def __repr__(self) -> str:
+        """Debug representation for use in logs or admin tooling."""
         return f"<Comment id={self.id} name='{self.content}' private={self.is_private}>"

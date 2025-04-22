@@ -1,11 +1,27 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Enum, ForeignKey, Boolean, Index
+"""Defines the Bug model and supporting enums for bug tracking, including priority and status."""
+
+import enum
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from app.db.base import Base
-import enum
 
 
 class BugStatus(str, enum.Enum):
+    """Enumeration for possible bug statuses."""
+
     NEW = "NEW"
     ASSIGNED = "ASSIGNED"
     FIXED = "FIXED"
@@ -14,6 +30,8 @@ class BugStatus(str, enum.Enum):
 
 
 class BugPriority(str, enum.Enum):
+    """Enumeration for bug priority levels."""
+
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
@@ -21,9 +39,10 @@ class BugPriority(str, enum.Enum):
 
 
 class Bug(Base):
-    """
-    Main model for tracking bugs in BugZot.
-    Includes priority, status, soft deletion, and relationships to users, products, and components.
+    """Main model for tracking bugs in BugZot.
+
+    Includes priority, status, soft deletion, and relationships to users,
+    products, and components.
     """
 
     __tablename__ = "bugs"
@@ -70,8 +89,6 @@ class Bug(Base):
         Index("ix_bug_priority", "priority"),
     )
 
-    def __repr__(self):
-        """
-        Debug representation for use in logs or admin tooling.
-        """
+    def __repr__(self) -> str:
+        """Debug representation for use in logs or admin tooling."""
         return f"<Bug id={self.id} title='{self.title}' status={self.status}>"

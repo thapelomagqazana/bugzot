@@ -1,13 +1,26 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, func, UniqueConstraint
+"""SQLAlchemy model for a product version entity."""
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 
 
 class Version(Base):
-    """
-    Represents a version or release of a product.
+    """Represents a version or release of a product.
+
     Each bug can optionally be associated with a version.
     """
+
     __tablename__ = "versions"
     __table_args__ = (
         UniqueConstraint("name", "product_id", name="uix_version_per_product"),
@@ -27,8 +40,6 @@ class Version(Base):
     product = relationship("Product", back_populates="versions")
     bugs = relationship("Bug", back_populates="version", lazy="selectin")
 
-    def __repr__(self):
-        """
-        Debug representation for use in logs or admin tooling.
-        """
+    def __repr__(self) -> str:
+        """Debug representation for use in logs or admin tooling."""
         return f"<Version id={self.id} name='{self.name}' active={self.is_active}>"

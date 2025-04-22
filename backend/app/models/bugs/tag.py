@@ -1,11 +1,14 @@
-from sqlalchemy import Column, Integer, String, DateTime, func, UniqueConstraint
+"""Defines the Tag model used for labeling bugs."""
+
+from sqlalchemy import Column, DateTime, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 
+
 class Tag(Base):
-    """
-    User-defined labels to categorize bugs (e.g., 'frontend', 'performance', 'regression').
-    """
+    """User-defined label to categorize bugs (e.g., 'frontend', 'performance', 'regression')."""
+
     __tablename__ = "tags"
     __table_args__ = (UniqueConstraint("name", name="uq_tag_name"),)
 
@@ -17,8 +20,6 @@ class Tag(Base):
     # Relationship
     bugs = relationship("BugTag", back_populates="tag", cascade="all, delete-orphan")
 
-    def __repr__(self):
-        """
-        Debug representation for use in logs or admin tooling.
-        """
+    def __repr__(self) -> str:
+        """Debug representation for use in logs or admin tooling."""
         return f"<Tag id={self.id} name='{self.name}' color={self.color}>"

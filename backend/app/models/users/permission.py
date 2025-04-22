@@ -1,12 +1,15 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, UniqueConstraint
-from sqlalchemy.sql import func
+"""Defines the Permission model representing system-level access rights."""
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
 from app.db.base import Base
 
 
 class Permission(Base):
-    """
-    Represents an individual system-level permission (e.g., 'create_bug').
+    """Represents an individual system-level permission (e.g., 'create_bug').
+
     Permissions are assigned to roles through RolePermission mappings.
     """
 
@@ -33,8 +36,6 @@ class Permission(Base):
     # Many-to-many backref (via RolePermission)
     roles = relationship("RolePermission", back_populates="permission", lazy="selectin")
 
-    def __repr__(self):
-        """
-        Debug representation for use in logs or admin tooling.
-        """
+    def __repr__(self) -> str:
+        """Debug representation for use in logs or admin tooling."""
         return f"<Permission id={self.id} name='{self.name}' active={self.is_active}>"
