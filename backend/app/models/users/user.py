@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, I
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
+from app.models.users.role import DEFAULT_ROLE_ID
 
 
 class User(Base):
@@ -26,7 +27,7 @@ class User(Base):
     full_name = Column(String, nullable=True)
 
     # Role relationship
-    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False, default=1)  # Default to 'reporter' role
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False, default=DEFAULT_ROLE_ID)  # Default to 'reporter' role
     role = relationship("Role", back_populates="users")
 
     # State flags

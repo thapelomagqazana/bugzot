@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
 
+DEFAULT_ROLE_ID = 1
 
 class Role(Base):
     """
