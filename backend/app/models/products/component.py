@@ -33,7 +33,9 @@ class Component(Base):
     description = Column(String(255), nullable=True)
 
     # Foreign key to owning Product
-    product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
+    product_id = Column(
+        Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Logical visibility and deletion flags
     is_active = Column(Boolean, default=True)
@@ -45,7 +47,9 @@ class Component(Base):
 
     # Relationships
     product = relationship("Product", back_populates="components", lazy="selectin")
-    bugs = relationship("Bug", back_populates="component", cascade="all, delete-orphan", lazy="selectin")
+    bugs = relationship(
+        "Bug", back_populates="component", cascade="all, delete-orphan", lazy="selectin"
+    )
 
     __table_args__ = (
         UniqueConstraint("name", "product_id", name="uix_component_per_product"),

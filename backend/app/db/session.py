@@ -1,4 +1,5 @@
 """Session management and FastAPI dependency injection for database access."""
+
 from collections.abc import Generator
 
 from app.db import SessionLocal

@@ -22,9 +22,7 @@ class Product(Base):
     """
 
     __tablename__ = "products"
-    __table_args__ = (
-        Index("ix_product_name", "name"),  # Support fast lookup by name
-    )
+    __table_args__ = (Index("ix_product_name", "name"),)  # Support fast lookup by name
 
     id = Column(Integer, primary_key=True)
 
@@ -41,7 +39,9 @@ class Product(Base):
     is_deleted = Column(Boolean, default=False)
 
     # Foreign Key to category
-    category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
+    category_id = Column(
+        Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True
+    )
     category = relationship("Category", back_populates="products", lazy="joined")
 
     # Auditing
@@ -49,9 +49,21 @@ class Product(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
-    components = relationship("Component", back_populates="product", cascade="all, delete-orphan", lazy="selectin")
-    bugs = relationship("Bug", back_populates="product", cascade="all, delete-orphan", lazy="selectin")
-    versions = relationship("Version", back_populates="product", cascade="all, delete-orphan", lazy="selectin")
+    components = relationship(
+        "Component",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    bugs = relationship(
+        "Bug", back_populates="product", cascade="all, delete-orphan", lazy="selectin"
+    )
+    versions = relationship(
+        "Version",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
     def __repr__(self) -> str:
         """Debug representation for use in logs or admin tooling."""

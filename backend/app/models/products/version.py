@@ -30,7 +30,9 @@ class Version(Base):
     name = Column(String(50), nullable=False)  # e.g. v1.2.0, 2024.03, etc.
     description = Column(String(255), nullable=True)
 
-    product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
+    product_id = Column(
+        Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False
+    )
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
 

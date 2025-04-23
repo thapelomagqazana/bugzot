@@ -23,7 +23,9 @@ class Comment(Base):
     is_private = Column(Boolean, default=False)
 
     # Optional thread support
-    parent_id = Column(Integer, ForeignKey("comments.id", ondelete="CASCADE"), nullable=True)
+    parent_id = Column(
+        Integer, ForeignKey("comments.id", ondelete="CASCADE"), nullable=True
+    )
 
     # Foreign Keys
     bug_id = Column(Integer, ForeignKey("bugs.id", ondelete="CASCADE"), nullable=False)

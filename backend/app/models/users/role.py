@@ -8,6 +8,7 @@ from app.db.base import Base
 
 DEFAULT_ROLE_ID = 1
 
+
 class Role(Base):
     """Represents a user role such as 'admin', 'developer', 'reporter'.
 
@@ -15,9 +16,7 @@ class Role(Base):
     """
 
     __tablename__ = "roles"
-    __table_args__ = (
-        UniqueConstraint("name", name="uq_role_name"),
-    )
+    __table_args__ = (UniqueConstraint("name", name="uq_role_name"),)
 
     id = Column(Integer, primary_key=True, index=True)
 

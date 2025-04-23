@@ -11,5 +11,3 @@ class Base(DeclarativeBase):
 
     Used by all models for shared metadata and base functionality.
     """
-
-

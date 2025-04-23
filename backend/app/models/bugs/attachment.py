@@ -20,7 +20,7 @@ class Attachment(Base):
     # File metadata
     filename = Column(String, nullable=False, index=True)
     file_path = Column(String, nullable=False)  # S3 path, local path, etc.
-    mime_type = Column(String, nullable=True)   # For previews / validation
+    mime_type = Column(String, nullable=True)  # For previews / validation
     file_size = Column(Integer, nullable=True)  # In bytes
 
     # Versioning
@@ -33,14 +33,14 @@ class Attachment(Base):
 
     # Relationships
     bug_id = Column(Integer, ForeignKey("bugs.id", ondelete="CASCADE"), nullable=False)
-    uploaded_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    uploaded_by_id = Column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
 
     bug = relationship("Bug", back_populates="attachments")
     uploaded_by = relationship("User", lazy="joined")
 
-    __table_args__ = (
-        Index("ix_attachment_bug_version", "bug_id", "version"),
-    )
+    __table_args__ = (Index("ix_attachment_bug_version", "bug_id", "version"),)
 
     def __repr__(self) -> str:
         """Debug representation for use in logs or admin tooling."""

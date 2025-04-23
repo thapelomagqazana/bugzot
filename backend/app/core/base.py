@@ -25,7 +25,10 @@ class BaseConfig(BaseSettings):
     DATABASE_URL: str  # Full connection string (sync/async support)
 
     # Redis cache connection
-    REDIS_URL: str
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+    REDIS_PASSWORD: str = ""
 
     # CORS config
     BACKEND_CORS_ORIGINS: str

@@ -18,4 +18,3 @@ profile = "black"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101", "E501", "S105"]
-

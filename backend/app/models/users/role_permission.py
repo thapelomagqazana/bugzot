@@ -37,7 +37,6 @@ class RolePermission(Base):
         index=True,
     )
 
-
     # Optional soft revocation
     is_active = Column(Boolean, default=True)
 

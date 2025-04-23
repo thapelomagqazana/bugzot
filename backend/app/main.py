@@ -17,15 +17,16 @@ app = FastAPI(
 
 app.include_router(auth.router, prefix="/api/v1")
 
+
 @app.get("/")
 def health_check() -> dict:
     """Return health check status."""
     return {
-            "status": "ok",
-            "message": "BugZot API is up!",
-            "environment": settings.ENVIRONMENT,
-            "debug": settings.DEBUG,
-        }
+        "status": "ok",
+        "message": "BugZot API is up!",
+        "environment": settings.ENVIRONMENT,
+        "debug": settings.DEBUG,
+    }
 
 
 @app.on_event("startup")
@@ -33,6 +34,7 @@ def log_db_info() -> None:
     """Log database connection info at startup."""
     # Use logging instead of print for production-grade logs
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info("🚀 Connected to: %s", engine.url)

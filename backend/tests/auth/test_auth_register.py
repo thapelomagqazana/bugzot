@@ -21,6 +21,7 @@ from tests.utils import (
 
 client = TestClient(app)
 
+
 # -----------------------
 # ✅ Positive Test Cases
 # -----------------------
@@ -44,11 +45,13 @@ def test_tc_03_email_lowercase(client: TestClient) -> None:
     assert res.status_code == HTTP_201_CREATED
     assert res.json()["email"] == "user3@example.com"
 
+
 def test_tc_04_default_role(client: TestClient) -> None:
     """Assign default role ID when user registers."""
     res = register(client, "user4@example.com", "StrongPass123!")
     assert res.status_code == HTTP_201_CREATED
     assert res.json()["role_id"] == 1  # Adjust if default is different
+
 
 # ------------------------
 # ❌ Negative Test Cases
@@ -72,6 +75,7 @@ def test_tc_07_empty_password(client: TestClient) -> None:
     res = register(client, "user7@example.com", "")
     assert res.status_code == HTTP_422_UNPROCESSABLE_ENTITY
 
+
 def test_tc_08_short_password(client: TestClient) -> None:
     """Reject password shorter than minimum required length."""
     res: Response = register(client, "user8@example.com", "123")
@@ -90,9 +94,11 @@ def test_tc_10_long_full_name(client: TestClient) -> None:
     res: Response = register(client, "user10@example.com", "StrongPass123!", long_name)
     assert res.status_code in [HTTP_201_CREATED, HTTP_422_UNPROCESSABLE_ENTITY]
 
+
 # ---------------------
 # 🌐 EDGE TEST CASES
 # ---------------------
+
 
 def test_tc_11_email_mixed_case(client: TestClient, db_session: Session) -> None:
     """Normalize and accept mixed-case emails."""
@@ -100,6 +106,7 @@ def test_tc_11_email_mixed_case(client: TestClient, db_session: Session) -> None
     assert res.status_code == HTTP_201_CREATED
     user = get_user_from_db(db_session, "testuser@example.com")
     assert user.email == "testuser@example.com"
+
 
 def test_tc_12_password_special_chars_only(client: TestClient) -> None:
     """Accept passwords with only special characters."""
@@ -113,6 +120,7 @@ def test_tc_13_empty_full_name(client: TestClient) -> None:
     assert res.status_code == HTTP_201_CREATED
     assert res.json()["full_name"] in [None, ""]
 
+
 def test_tc_14_email_with_spaces(client: TestClient, db_session: Session) -> None:
     """Trim whitespace in email before storing."""
     res = register(client, "  user.space@example.com  ", "StrongPass123!")
@@ -120,10 +128,13 @@ def test_tc_14_email_with_spaces(client: TestClient, db_session: Session) -> Non
     user = get_user_from_db(db_session, "user.space@example.com")
     assert user is not None
 
+
 # ---------------------
 # 🔲 CORNER TEST CASES
 # ---------------------
-@pytest.mark.skip(reason="Race condition requires transaction-safe locking or retry logic")
+@pytest.mark.skip(
+    reason="Race condition requires transaction-safe locking or retry logic"
+)
 def test_tc_15_race_condition_same_email(client: TestClient) -> None:
     """Ensure registration race condition is handled correctly."""
     from concurrent.futures import ThreadPoolExecutor
@@ -138,6 +149,7 @@ def test_tc_15_race_condition_same_email(client: TestClient) -> None:
     assert HTTP_201_CREATED in statuses
     assert HTTP_409_CONFLICT in statuses
 
+
 def test_tc_16_large_full_name(client: TestClient) -> None:
     """Reject extremely large full_name field."""
     long_name = "X" * 2_000_000
@@ -147,6 +159,7 @@ def test_tc_16_large_full_name(client: TestClient) -> None:
         HTTP_422_UNPROCESSABLE_ENTITY,
         HTTP_400_BAD_REQUEST,
     ]
+
 
 @pytest.mark.skip(reason="Reserved email check not implemented yet")
 def test_tc_17_reserved_admin_email(client: TestClient) -> None:

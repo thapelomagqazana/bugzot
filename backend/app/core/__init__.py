@@ -5,6 +5,7 @@ from functools import lru_cache
 
 from pydantic_settings import BaseSettings
 
+
 @lru_cache
 def get_settings() -> BaseSettings:
     """Load settings for the current environment (cached).
@@ -20,11 +21,14 @@ def get_settings() -> BaseSettings:
 
     if env == "production":
         from app.core.prod import ProdConfig
+
         return ProdConfig()
 
     if env == "staging":
         from app.core.staging import StagingConfig
+
         return StagingConfig()
 
     from app.core.dev import DevConfig
+
     return DevConfig()

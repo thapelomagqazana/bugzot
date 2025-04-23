@@ -18,10 +18,13 @@ def get_user_by_email(db: Session, email: str) -> User | None:
         User | None: Returns a User instance if found, else None.
 
     """
-    return db.query(User).filter(
-        User.email.ilike(email),
-    ).first()  # Case-insensitive match
-
+    return (
+        db.query(User)
+        .filter(
+            User.email.ilike(email),
+        )
+        .first()
+    )  # Case-insensitive match
 
 
 def create_user(db: Session, payload: UserRegisterRequest, hashed_pw: str) -> User:
@@ -38,14 +41,19 @@ def create_user(db: Session, payload: UserRegisterRequest, hashed_pw: str) -> Us
 
     """
     db_user = User(
-        email=payload.email.lower(),           # Normalize email
-        hashed_password=hashed_pw,             # Store securely hashed password
-        full_name=payload.full_name,           # Optional display name
-        role_id=DEFAULT_ROLE_ID,                # Default to 'reporter' or equivalent
+        email=payload.email.lower(),  # Normalize email
+        hashed_password=hashed_pw,  # Store securely hashed password
+        full_name=payload.full_name,  # Optional display name
+        role_id=DEFAULT_ROLE_ID,  # Default to 'reporter' or equivalent
     )
 
-    db.add(db_user)        # Stage insert
-    db.commit()            # Commit transaction
-    db.refresh(db_user)    # Refresh object with DB-generated values
+    db.add(db_user)  # Stage insert
+    db.commit()  # Commit transaction
+    db.refresh(db_user)  # Refresh object with DB-generated values
 
     return db_user
+
+
+def get_user_by_id(db: Session, user_id: int) -> User | None:
+    """Retrieve a user by their ID from the database."""
+    return db.query(User).filter(User.id == user_id).first()

@@ -74,7 +74,9 @@ class User(Base):
 
     # Unique constraint workaround for soft delete
     __table_args__ = (
-        Index("uq_users_email_active", "email", postgresql_where=~is_deleted, unique=True),
+        Index(
+            "uq_users_email_active", "email", postgresql_where=~is_deleted, unique=True
+        ),
     )
 
     def __repr__(self) -> str:

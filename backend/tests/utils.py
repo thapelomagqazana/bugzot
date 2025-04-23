@@ -31,3 +31,49 @@ def get_user_from_db(db: Session, email: str) -> object | None:
     from app.models.users.user import User
 
     return db.query(User).filter(User.email == email.lower()).first()
+
+
+def login(client: TestClient, email: str, password: str):
+    """
+    Send a login request.
+
+    Args:
+        client (TestClient): FastAPI test client.
+        email (str): User email.
+        password (str): User password.
+
+    Returns:
+        Response: The HTTP response from the login endpoint.
+    """
+    return client.post(
+        "/api/v1/auth/login", json={"email": email, "password": password}
+    )
+
+
+def logout(client: TestClient, token: str):
+    """
+    Send a logout request.
+
+    Args:
+        client (TestClient): FastAPI test client.
+        token (str): Bearer JWT token.
+
+    Returns:
+        Response: The HTTP response from the logout endpoint.
+    """
+    return client.post(
+        "/api/v1/auth/logout", headers={"Authorization": f"Bearer {token}"}
+    )
+
+
+def get_token_from_response(res) -> str:
+    """
+    Extract access token from login response.
+
+    Args:
+        res (Response): Login response.
+
+    Returns:
+        str: Access token from the response.
+    """
+    return res.json()["access_token"]

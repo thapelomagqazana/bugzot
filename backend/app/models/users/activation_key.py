@@ -35,7 +35,9 @@ class ActivationKey(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     # FK to user (cascade on user deletion)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Secure, one-time key
     key = Column(String(128), unique=True, nullable=False, index=True)

@@ -1,4 +1,5 @@
 """Schemas for user authentication and token handling."""
+
 from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field, constr
@@ -40,4 +41,3 @@ class TokenResponse(BaseModel):
 
     access_token: str
     token_type: str = "bearer"  # noqa: S105
-

@@ -14,9 +14,7 @@ class Permission(Base):
     """
 
     __tablename__ = "permissions"
-    __table_args__ = (
-        UniqueConstraint("name", name="uq_permission_name"),
-    )
+    __table_args__ = (UniqueConstraint("name", name="uq_permission_name"),)
 
     id = Column(Integer, primary_key=True, index=True)
 
