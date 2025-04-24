@@ -25,7 +25,11 @@ from app.core.validation import (
 from app.core.rate_limiter import check_rate_limit
 from app.services.email import send_activation_email
 from app.core.log_decorator import audit_log
-from app.crud.user import create_user, get_user_by_email
+from app.crud.user import (
+    create_user, get_user_by_email, 
+    increment_login_attempts, reset_login_attempts
+)
+from app.core.constants import LOGIN_RATE_LIMIT_PREFIX, REGISTER_RATE_LIMIT_PREFIX
 from app.core.redis import redis_client
 from app.db.session import get_db
 from app.core import get_settings
@@ -77,7 +81,7 @@ async def register_user(
         raise HTTPException(status_code=400, detail="Bot activity detected.")
 
     # Rate limiting
-    if not check_rate_limit(ip):
+    if not check_rate_limit(REGISTER_RATE_LIMIT_PREFIX, ip):
         logger.warning("[RATELIMIT] Too many requests", extra={"ip": ip})
         raise HTTPException(status_code=429, detail="Too many requests from this IP.")
 
@@ -118,31 +122,67 @@ async def register_user(
 
     return new_user
 
+
 @router.post("/login")
-def login_user(
-    payload: UserLoginRequest, db: Annotated[Session, Depends(get_db)]
+@audit_log("User Login Attempt")
+async def login_user(
+    payload: UserLoginRequest,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    user_agent: Optional[str] = Header(None),
 ) -> TokenResponse:
-    """Authenticate user and return JWT token."""
-    # Fetch user from DB by email
-    user: User | None = get_user_by_email(db, payload.email.lower())
+    """
+    Authenticate user and return JWT access token.
 
-    if not user or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials or inactive user",
-        )
+    - Normalize and validate credentials
+    - Track failed attempts and rate limit
+    - Structured audit logging
+    """
+    ip = request.client.host
+    email = payload.email.strip().lower()
 
-    # Check password validity
+    # Rate limiting per IP
+    rate_key = f"{LOGIN_RATE_LIMIT_PREFIX}:{ip}"
+    if not check_rate_limit(LOGIN_RATE_LIMIT_PREFIX, ip):
+        logger.warning("[RATELIMIT] Too many login attempts", extra={"ip": ip})
+        raise HTTPException(status_code=429, detail="Too many login attempts. Try again later.")
+
+    # Fetch user
+    user = get_user_by_email(db, email=email)
+    if not user or user.is_deleted:
+        redis_client.incr(rate_key)
+        redis_client.expire(rate_key, 60)
+        logger.warning("[LOGIN_FAIL] Invalid credentials", extra={"ip": ip})
+        raise HTTPException(status_code=401, detail="Invalid credentials.")
+
+    if not user.is_active:
+        logger.warning("[LOGIN_FAIL] Account is inactive or unverified.", extra={"ip": ip})
+        raise HTTPException(status_code=403, detail="Account is inactive or unverified.")
+
     if not verify_password(payload.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-        )
+        logger.warning("[LOGIN_FAIL] Invalid credentials", extra={"ip": ip})
+        increment_login_attempts(db, user)
+        redis_client.incr(rate_key)
+        redis_client.expire(rate_key, 60)
+        raise HTTPException(status_code=401, detail="Invalid credentials.")
 
-    # Generate JWT token
-    access_token = create_access_token(data={"sub": str(user.id)})
+    # Successful login
+    reset_login_attempts(db, user)
+    token = create_access_token(data={"sub": str(user.id)})
 
-    return TokenResponse(access_token=access_token, token_type=TOKEN_TYPE_BEARER)
+    # Log structured event
+    logger.info(
+        "[LOGIN] User logged in successfully",
+        extra={
+            "ip": ip,
+            "user_email": user.email,
+            "user_agent": user_agent,
+            "request_id": getattr(request.state, "request_id", "-"),
+        },
+    )
+
+    return TokenResponse(access_token=token, token_type=TOKEN_TYPE_BEARER)
+
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

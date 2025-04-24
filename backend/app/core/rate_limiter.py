@@ -7,13 +7,13 @@ settings = get_settings()
 MAX_REQUESTS = 5
 WINDOW_SECONDS = 60
 
-def check_rate_limit(ip: str) -> bool:
+def check_rate_limit(prefix: str,ip: str) -> bool:
     """
     Limit number of requests from a single IP within a fixed window.
     """
     if settings.ENVIRONMENT == "test" or settings.ENVIRONMENT == "development":
         return True  # skip rate limiting in tests
-    key = f"rl:{ip}"
+    key = f"{prefix}:{ip}"
     current = r.get(key)
     if current and int(current) >= MAX_REQUESTS:
         return False
