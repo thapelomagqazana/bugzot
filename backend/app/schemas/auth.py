@@ -1,7 +1,7 @@
 """Schemas for user authentication and token handling."""
 
 from datetime import datetime
-
+from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, constr
 
 
@@ -22,6 +22,7 @@ class UserResponse(BaseModel):
     role_id: int
     is_active: bool
     created_at: datetime
+    updated_at: Optional[datetime]
 
     class Config:
         """Enable ORM mode for Pydantic models."""

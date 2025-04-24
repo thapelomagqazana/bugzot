@@ -39,9 +39,9 @@ def test_tc_02_logout_then_use_token(client: TestClient) -> None:
     token = get_token_from_response(res1)
     logout(client, token)
 
-    # # Attempt using the token again
-    # res = client.get("/api/v1/users/me", headers={"Authorization": f"Bearer {token}"})
-    # assert res.status_code == HTTP_401_UNAUTHORIZED
+    # Attempt using the token again
+    res = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == HTTP_401_UNAUTHORIZED
 
 
 def test_tc_03_logout_multiple_times(client: TestClient) -> None:
@@ -52,7 +52,7 @@ def test_tc_03_logout_multiple_times(client: TestClient) -> None:
     res1 = logout(client, token)
     res2 = logout(client, token)
     assert res1.status_code == HTTP_204_NO_CONTENT
-    assert res2.status_code == HTTP_204_NO_CONTENT
+    assert res2.status_code == HTTP_401_UNAUTHORIZED
 
 
 def test_tc_04_token_blacklisted_in_redis(client: TestClient) -> None:

@@ -1,6 +1,6 @@
 """Routes for managing auth-related operations."""
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -20,8 +20,7 @@ from jose import jwt
 from app.db.session import get_db
 from app.core import get_settings
 
-if TYPE_CHECKING:
-    from app.models.users.user import User
+from app.models.users.user import User
 from app.schemas.auth import (
     TokenResponse,
     UserLoginRequest,
@@ -105,3 +104,12 @@ def logout_user(
     redis_client.setex(f"blacklist:{jti}", ttl, "true")
 
     return {"detail": "Successfully logged out."}
+
+@router.get("/me", response_model=UserResponse)
+def get_current_user_info(
+    current_user: User = Depends(get_current_user),
+) -> UserResponse:
+    """
+    Retrieve details of the currently authenticated user.
+    """
+    return current_user

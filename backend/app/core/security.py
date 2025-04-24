@@ -12,6 +12,7 @@ from app.db.session import get_db
 from app.core import get_settings
 from app.crud.user import get_user_by_id
 from app.core.redis import redis_client
+from app.models.users.user import User
 import uuid
 
 # Initialize password hashing context
@@ -102,21 +103,24 @@ def decode_access_token(token: str) -> dict:
 # --- Auth Dependency ---
 def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-):
+)-> User:
+    jti = get_token_jti(token)
     # Check Redis blacklist
-    if redis_client.get(f"{TOKEN_BLACKLIST_PREFIX}{token}"):
+    if redis_client.get(f"{TOKEN_BLACKLIST_PREFIX}{jti}"):
         raise HTTPException(status_code=401, detail="Token has been revoked.")
 
     # Decode JWT
     payload = decode_access_token(token)
 
-    user_id: Optional[int] = payload.get("sub")
-    if user_id is None:
+    user_id_raw: Optional[int] = payload.get("sub")
+    try:
+        user_id = int(user_id_raw)
+    except (TypeError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid token payload.")
 
     # Fetch user from DB
     user = get_user_by_id(db, user_id=int(user_id))
-    if not user or not user.is_active:
+    if not user:
         raise HTTPException(status_code=401, detail="Inactive or missing user.")
 
     return user
