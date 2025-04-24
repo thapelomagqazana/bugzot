@@ -7,10 +7,10 @@ from pydantic import BaseModel, EmailStr, Field, constr
 
 class UserRegisterRequest(BaseModel):
     """Schema for user registration input."""
-
+    
     email: EmailStr
-    password: str = Field(..., min_length=8)
-    full_name: constr(max_length=255) | None = None
+    password: str = Field(..., min_length=8, max_length=128)
+    full_name: Optional[str] = Field(default=None, max_length=100)
 
 
 class UserResponse(BaseModel):
@@ -26,8 +26,7 @@ class UserResponse(BaseModel):
 
     class Config:
         """Enable ORM mode for Pydantic models."""
-
-        orm_mode = True  # allow returning ORM objects directly
+        from_attributes = True
 
 
 class UserLoginRequest(BaseModel):

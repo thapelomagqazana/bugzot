@@ -1,25 +1,34 @@
 """Routes for managing auth-related operations."""
 
-from typing import Annotated
-
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional, Annotated
+import logging
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.orm import Session
 from app.core.constants import TOKEN_TYPE_BEARER
 from app.core.security import (
     create_access_token,
     hash_password,
     verify_password,
+    validate_password_strength,
+    create_activation_token,
     get_current_user,
     decode_access_token,
     oauth2_scheme,
     get_token_jti,
 )
+from app.core.validation import (
+    is_disposable_email,
+    validate_email_mx,
+    sanitize_text,
+    check_honeypot_field,
+)
+from app.core.rate_limiter import check_rate_limit
+from app.services.email import send_activation_email
+from app.core.log_decorator import audit_log
 from app.crud.user import create_user, get_user_by_email
 from app.core.redis import redis_client
-from jose import jwt
 from app.db.session import get_db
 from app.core import get_settings
-
 from app.models.users.user import User
 from app.schemas.auth import (
     TokenResponse,
@@ -31,25 +40,83 @@ from datetime import datetime
 
 settings = get_settings()
 router = APIRouter(prefix="/auth", tags=["Auth"])
-
+logger = logging.getLogger("audit")
+DISPOSABLE_DOMAINS = {"tempmail.com", "10minutemail.com", "mailinator.com"}
 
 @router.post(
     "/register",
+    response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def register_user(
-    payload: UserRegisterRequest, db: Annotated[Session, Depends(get_db)]
+@audit_log("User Registration Attempt")
+async def register_user(
+    payload: UserRegisterRequest,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    user_agent: Optional[str] = Header(None),
+    honeypot: Optional[str] = Header(None),
 ) -> UserResponse:
-    """Register a new user and return their details."""
-    existing_user = get_user_by_email(db, email=payload.email.lower())
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Email is already registered.",
-        )
+    """
+    Register a new user.
 
-    return create_user(db, payload, hashed_pw=hash_password(payload.password))
+    - Normalize and validate inputs
+    - Bot detection (honeypot)
+    - IP rate limiting
+    - Email domain + disposable check
+    - Password strength + hashing
+    - Create user and send activation email
+    - Structured logging for auditing
+    """
+    ip = request.client.host
+    email = payload.email.strip().lower()
+    full_name = sanitize_text(payload.full_name) if payload.full_name else None
 
+    # Honeypot bot detection
+    if not check_honeypot_field(honeypot):
+        logger.warning("[BOT] Honeypot triggered", extra={"ip": ip, "user_agent": user_agent})
+        raise HTTPException(status_code=400, detail="Bot activity detected.")
+
+    # Rate limiting
+    if not check_rate_limit(ip):
+        logger.warning("[RATELIMIT] Too many requests", extra={"ip": ip})
+        raise HTTPException(status_code=429, detail="Too many requests from this IP.")
+
+    # Disposable email check
+    if is_disposable_email(email, DISPOSABLE_DOMAINS):
+        raise HTTPException(status_code=400, detail="Disposable email addresses are not allowed.")
+
+    # DNS MX check
+    if not validate_email_mx(email):
+        raise HTTPException(status_code=400, detail="Invalid email domain (MX check failed).")
+
+    # Uniqueness check
+    if get_user_by_email(db, email):
+        raise HTTPException(status_code=409, detail="Email already registered.")
+
+    # Password validation and hashing
+    if not validate_password_strength(payload.password):
+        raise HTTPException(status_code=422, detail="Password is too weak.")
+    hashed_pw = hash_password(payload.password)
+
+    # Create new user in DB
+    new_user = create_user(db, payload, hashed_pw, full_name)
+
+    # Email verification link
+    token = create_activation_token(db, new_user.id, settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+    send_activation_email(email, token)
+
+    # Audit log
+    logger.info(
+        "[REGISTER] User registered",
+        extra={
+            "ip": ip,
+            "user_email": email,
+            "user_agent": user_agent,
+            "request_id": getattr(request.state, "request_id", "-"),
+        },
+    )
+
+    return new_user
 
 @router.post("/login")
 def login_user(

@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from starlette.responses import Response
 
 
+def make_email_str(username: str) -> str:
+    return f"{username}@protonmail.com"
+
 def register(
     client: TestClient,
     email: str,

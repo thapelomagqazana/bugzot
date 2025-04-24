@@ -1,5 +1,6 @@
 """Security-related utilities such as password hashing and token handling."""
 
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Optional
 from fastapi import Depends, HTTPException, status
@@ -13,7 +14,9 @@ from app.core import get_settings
 from app.crud.user import get_user_by_id
 from app.core.redis import redis_client
 from app.models.users.user import User
+from app.models.users.activation_key import ActivationKey
 import uuid
+import re
 
 # Initialize password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -23,6 +26,27 @@ settings = get_settings()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 TOKEN_BLACKLIST_PREFIX = "blacklist:"
+
+def create_activation_token(db: Session, user_id: int, ttl_minutes: int = 30) -> ActivationKey:
+    """
+    Create and store a secure one-time activation token for a user.
+    """
+    # Deactivate any old tokens
+    db.query(ActivationKey).filter_by(user_id=user_id, is_active=True).update({"is_active": False})
+
+    token = secrets.token_urlsafe(48)
+    expires_at = datetime.utcnow() + timedelta(minutes=ttl_minutes)
+
+    activation = ActivationKey(
+        user_id=user_id,
+        key=token,
+        expires_at=expires_at,
+        is_active=True,
+    )
+    db.add(activation)
+    db.commit()
+    db.refresh(activation)
+    return activation
 
 
 def hash_password(password: str) -> str:
@@ -36,6 +60,26 @@ def hash_password(password: str) -> str:
 
     """
     return pwd_context.hash(password)
+
+def validate_password_strength(password: str) -> bool:
+    """
+    Validates password strength.
+
+    Rules:
+    - Min 8 characters
+    - At least one lowercase, uppercase, digit, special character
+    """
+    if len(password) < 8:
+        return False
+    if not re.search(r"[a-z]", password):
+        return False
+    if not re.search(r"[A-Z]", password):
+        return False
+    if not re.search(r"[\d]", password):
+        return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False
+    return True
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

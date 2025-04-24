@@ -3,18 +3,22 @@
 from fastapi import FastAPI
 
 from app.api.v1.routes import auth
+from app.core.logging_config import setup_logging
+from app.middleware.logging_middleware import LoggingContextMiddleware
 from app.core import get_settings
 from app.db import engine
+import logging
 
 # Load the configuration once
 settings = get_settings()
+setup_logging()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.API_VERSION,
     debug=settings.DEBUG,
 )
-
+app.add_middleware(LoggingContextMiddleware)
 app.include_router(auth.router, prefix="/api/v1")
 
 
@@ -31,10 +35,8 @@ def health_check() -> dict:
 
 @app.on_event("startup")
 def log_db_info() -> None:
-    """Log database connection info at startup."""
-    # Use logging instead of print for production-grade logs
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    logger.info("🚀 Connected to: %s", engine.url)
+    """
+    Log database connection info at startup using structured logs.
+    """
+    logger = logging.getLogger("startup")
+    logger.info("🚀 Connected to database", extra={"db_url": str(engine.url)})

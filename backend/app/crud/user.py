@@ -27,31 +27,20 @@ def get_user_by_email(db: Session, email: str) -> User | None:
     )  # Case-insensitive match
 
 
-def create_user(db: Session, payload: UserRegisterRequest, hashed_pw: str) -> User:
-    """Create and persist a new user in the database.
-
-    Args:
-        db (Session): SQLAlchemy database session.
-        payload (UserRegisterRequest): Pydantic schema with email and
-            optional full_name.
-        hashed_pw (str): Pre-hashed password to store.
-
-    Returns:
-        User: The newly created User instance.
-
+def create_user(db, payload: UserRegisterRequest, hashed_pw: str, full_name: str | None = None) -> User:
     """
-    db_user = User(
-        email=payload.email.lower(),  # Normalize email
-        hashed_password=hashed_pw,  # Store securely hashed password
-        full_name=payload.full_name,  # Optional display name
+    Insert new user record with defaults and return it.
+    """
+    user = User(
+        email=payload.email.lower(),
+        hashed_password=hashed_pw,
+        full_name=full_name,
         role_id=DEFAULT_ROLE_ID,  # Default to 'reporter' or equivalent
     )
-
-    db.add(db_user)  # Stage insert
-    db.commit()  # Commit transaction
-    db.refresh(db_user)  # Refresh object with DB-generated values
-
-    return db_user
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 def get_user_by_id(db: Session, user_id: int) -> User | None:
