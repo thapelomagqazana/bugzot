@@ -15,6 +15,7 @@ from app.core.security import (
     decode_access_token,
     oauth2_scheme,
     get_token_jti,
+    TOKEN_BLACKLIST_PREFIX,
 )
 from app.core.validation import (
     is_disposable_email,
@@ -29,7 +30,10 @@ from app.crud.user import (
     create_user, get_user_by_email, 
     increment_login_attempts, reset_login_attempts
 )
-from app.core.constants import LOGIN_RATE_LIMIT_PREFIX, REGISTER_RATE_LIMIT_PREFIX
+from app.core.constants import (
+    LOGIN_RATE_LIMIT_PREFIX, 
+    REGISTER_RATE_LIMIT_PREFIX
+)
 from app.core.redis import redis_client
 from app.db.session import get_db
 from app.core import get_settings
@@ -186,37 +190,84 @@ async def login_user(
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout_user(
+@audit_log("User Logout Attempt")
+async def logout_user(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
     token: Annotated[str, Depends(oauth2_scheme)],
-    current_user: Annotated[dict, Depends(get_current_user)],
-):
+    user: Annotated[User, Depends(get_current_user)],
+    user_agent: Optional[str] = Header(None),
+) -> None:
     """
-    Logout the current user by blacklisting the JWT token.
+    Invalidate JWT access token by blacklisting its JTI in Redis.
+
+    - Token must be valid
+    - Token's expiration is used for TTL in Redis
+    - Blacklisting ensures token reuse fails
     """
-    # Determine the token expiration time
-    jti = get_token_jti(token)
-    payload = decode_access_token(token)
-    exp_timestamp = payload.get("exp")
-    if not exp_timestamp:
-        raise HTTPException(status_code=400, detail="Token missing expiration")
+    ip = request.client.host
+    try:
+        payload = decode_access_token(token)
+        jti = get_token_jti(token)
+        exp_timestamp = payload.get("exp")
 
-    ttl = exp_timestamp - int(datetime.utcnow().timestamp())
+        if not exp_timestamp:
+            raise HTTPException(status_code=400, detail="Token missing expiration")
 
-    if redis_client is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Redis unavailable"
+        ttl = exp_timestamp - int(datetime.utcnow().timestamp())
+        if ttl <= 0:
+            logger.info("[LOGOUT] Token already expired", extra={"user_id": user.id, "ip": ip})
+            return  # Already expired, consider it logged out
+
+        redis_key = f"{TOKEN_BLACKLIST_PREFIX}{jti}"
+
+        if redis_client:
+            redis_client.setex(redis_key, ttl, "true")
+        else:
+            logger.warning("[LOGOUT] Redis unavailable", extra={"user_id": user.id, "ip": ip})
+            raise HTTPException(status_code=503, detail="Logout temporarily unavailable")
+
+        logger.info(
+            "[LOGOUT] Token blacklisted",
+            extra={
+                "user_id": user.id,
+                "user_email": user.email,
+                "ip": ip,
+                "user_agent": user_agent,
+                "request_id": getattr(request.state, 'request_id', None),
+            },
         )
 
-    # Blacklist the token in Redis
-    redis_client.setex(f"blacklist:{jti}", ttl, "true")
+    except Exception as e:
+        logger.error("[LOGOUT] Failed", exc_info=e)
+        raise HTTPException(status_code=401, detail="Invalid token")
 
-    return {"detail": "Successfully logged out."}
 
 @router.get("/me", response_model=UserResponse)
-def get_current_user_info(
+@audit_log("Fetch Current User Info")
+async def get_me(
+    request: Request,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user_agent: Optional[str] = Header(None),
 ) -> UserResponse:
     """
-    Retrieve details of the currently authenticated user.
+    Returns info about the currently authenticated user.
+    
+    - Requires valid JWT Bearer Token
+    - Includes IP logging and user agent
+    - Returns sanitized user info
     """
+
+    logger.info(
+        "[GET_ME] User info fetched",
+        extra={
+            "ip": request.client.host,
+            "user_id": current_user.id,
+            "user_email": current_user.email,
+            "user_agent": user_agent,
+            "request_id": getattr(request.state, "request_id", "-"),
+        },
+    )
+
     return current_user

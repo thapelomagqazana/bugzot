@@ -9,7 +9,7 @@ from app.db.base import Base
 from app.db.init_db import seed_roles
 from app.db.session import get_db
 from app.main import app
-
+from tests.utils import register, login, get_token_from_response
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database() -> None:
@@ -53,3 +53,13 @@ def client(db_session: Session) -> TestClient:
 
     app.dependency_overrides[get_db] = override_get_db
     return TestClient(app)
+
+
+@pytest.fixture
+def token_valid_user(client):
+    """Creates a valid user and returns access token."""
+    email = "tokenuser@example.com"
+    password = "StrongPass123!"
+    register(client, email, password)
+    res = login(client, email, password)
+    return get_token_from_response(res)
