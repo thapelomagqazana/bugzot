@@ -1,8 +1,8 @@
 """Schemas for user authentication and token handling."""
 
-from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field, constr
+from pydantic import BaseModel, EmailStr, Field
+from app.models.users.role import DEFAULT_ROLE_ID
 
 
 class UserRegisterRequest(BaseModel):
@@ -11,23 +11,7 @@ class UserRegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     full_name: Optional[str] = Field(default=None, max_length=100)
-
-
-class UserResponse(BaseModel):
-    """Schema for user data returned after registration or login."""
-
-    id: int
-    email: EmailStr
-    full_name: str | None = None
-    role_id: int
-    is_active: bool
-    created_at: datetime
-    updated_at: Optional[datetime]
-
-    class Config:
-        """Enable ORM mode for Pydantic models."""
-        from_attributes = True
-
+    role_id: int = Field(default=DEFAULT_ROLE_ID)
 
 class UserLoginRequest(BaseModel):
     """Schema for user login input."""

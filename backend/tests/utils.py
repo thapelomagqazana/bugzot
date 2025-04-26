@@ -13,12 +13,18 @@ def register(
     email: str,
     password: str,
     full_name: str | None = None,
+    role_id: int = 1,  # default = reporter
 ) -> Response:
-    """Register a new user."""
-    payload = {"email": email.strip(), "password": password}
+    """Register a new user with optional role_id (for testing purposes)."""
+    payload = {
+        "email": email.strip(),
+        "password": password,
+        "role_id": role_id
+    }
     if full_name is not None:
         payload["full_name"] = full_name
     return client.post("/api/v1/auth/register", json=payload)
+
 
 
 def login(client: TestClient, email: str, password: str) -> Response:

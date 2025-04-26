@@ -41,9 +41,9 @@ from app.models.users.user import User
 from app.schemas.auth import (
     TokenResponse,
     UserLoginRequest,
-    UserRegisterRequest,
-    UserResponse,
+    UserRegisterRequest
 )
+from app.schemas.users import UserResponse 
 from datetime import datetime
 
 settings = get_settings()
@@ -124,7 +124,7 @@ async def register_user(
         },
     )
 
-    return new_user
+    return UserResponse.model_validate(new_user)
 
 
 @router.post("/login")

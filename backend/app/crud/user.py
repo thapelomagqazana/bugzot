@@ -2,7 +2,6 @@
 
 from sqlalchemy.orm import Session
 
-from app.models.users.role import DEFAULT_ROLE_ID
 from app.models.users.user import User
 from app.schemas.auth import UserRegisterRequest
 from datetime import datetime
@@ -36,7 +35,7 @@ def create_user(db, payload: UserRegisterRequest, hashed_pw: str, full_name: str
         email=payload.email.lower(),
         hashed_password=hashed_pw,
         full_name=full_name,
-        role_id=DEFAULT_ROLE_ID,  # Default to 'reporter' or equivalent
+        role_id=payload.role_id,  # Default to 'reporter' or equivalent
     )
     db.add(user)
     db.commit()

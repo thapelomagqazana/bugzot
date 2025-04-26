@@ -1,8 +1,7 @@
 """FastAPI application entry point and environment configuration checker."""
 
 from fastapi import FastAPI
-
-from app.api.v1.routes import auth
+from app.api.v1.routes import auth, users
 from app.core.logging_config import setup_logging
 from app.middleware.logging_middleware import LoggingContextMiddleware
 from app.core import get_settings
@@ -20,6 +19,7 @@ app = FastAPI(
 )
 app.add_middleware(LoggingContextMiddleware)
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(users.router, prefix="/api/v1")
 
 
 @app.get("/")
