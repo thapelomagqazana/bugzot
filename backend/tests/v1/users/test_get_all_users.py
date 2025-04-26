@@ -9,10 +9,14 @@ client = TestClient(app)
 settings = get_settings()
 ENDPOINT = "/api/v1/users"
 
+
 def get_admin_token_header(res):
     return {"Authorization": f"Bearer {res.json()["access_token"]}"}
 
-def generate_token(payload: dict, secret: str = settings.JWT_SECRET_KEY, expire_in_minutes=5):
+
+def generate_token(
+    payload: dict, secret: str = settings.JWT_SECRET_KEY, expire_in_minutes=5
+):
     payload = payload.copy()
     payload["exp"] = datetime.utcnow() + timedelta(minutes=expire_in_minutes)
     payload.setdefault("jti", "dummy-jti-1234")
@@ -35,7 +39,9 @@ def test_tc_02_admin_with_pagination(client: TestClient):
     email = make_email_str("adminuser")
     register(client, email, "StrongPass123!", role_id=3)
     res1 = login(client, email, "StrongPass123!")
-    res = client.get(f"{ENDPOINT}?limit=10&skip=0", headers=get_admin_token_header(res1))
+    res = client.get(
+        f"{ENDPOINT}?limit=10&skip=0", headers=get_admin_token_header(res1)
+    )
     assert res.status_code == 200
     assert isinstance(res.json()["data"], list)
     assert len(res.json()["data"]) <= 10
@@ -74,13 +80,17 @@ def test_tc_07_admin_filter_inactive_users(client: TestClient):
     email = make_email_str("adminuser")
     register(client, email, "StrongPass123!", role_id=3)
     res1 = login(client, email, "StrongPass123!")
-    res = client.get(f"{ENDPOINT}?is_active=false", headers=get_admin_token_header(res1))
+    res = client.get(
+        f"{ENDPOINT}?is_active=false", headers=get_admin_token_header(res1)
+    )
     assert res.status_code == 200
     assert all(user["is_active"] is False for user in res.json()["data"])
+
 
 # -----------------------
 # ❌ Negative Test Cases
 # -----------------------
+
 
 def test_tc_10_missing_authorization_header(client: TestClient):
     res = client.get(ENDPOINT)
@@ -94,14 +104,18 @@ def test_tc_11_token_not_jwt(client: TestClient):
 
 
 def test_tc_12_token_expired(client: TestClient):
-    token = generate_token({"sub": "admin@example.com", "role": "admin"}, expire_in_minutes=-1)
+    token = generate_token(
+        {"sub": "admin@example.com", "role": "admin"}, expire_in_minutes=-1
+    )
     headers = {"Authorization": f"Bearer {token}"}
     res = client.get(ENDPOINT, headers=headers)
     assert res.status_code == 401
 
 
 def test_tc_13_token_wrong_secret(client: TestClient):
-    token = generate_token({"sub": "admin@example.com", "role": "admin"}, secret="wrong_secret_key")
+    token = generate_token(
+        {"sub": "admin@example.com", "role": "admin"}, secret="wrong_secret_key"
+    )
     headers = {"Authorization": f"Bearer {token}"}
     res = client.get(ENDPOINT, headers=headers)
     assert res.status_code == 401
@@ -131,7 +145,7 @@ def test_tc_20_limit_zero_valid_admin(client: TestClient):
     res1 = login(client, email, "StrongPass123!")
     res = client.get(f"{ENDPOINT}?limit=0", headers=get_admin_token_header(res1))
     assert res.status_code == 200
-    assert res.json()["data"]  == []
+    assert res.json()["data"] == []
 
 
 # def test_tc_21_skip_beyond_user_count(client: TestClient):

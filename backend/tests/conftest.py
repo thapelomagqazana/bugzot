@@ -12,6 +12,7 @@ from app.models.users.user import User
 from app.main import app
 from tests.utils import register, login, get_token_from_response
 
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_database() -> None:
     """Initialize the test database and seed roles once per session."""
@@ -28,6 +29,7 @@ def setup_database() -> None:
     yield
 
     Base.metadata.drop_all(bind=test_engine)
+
 
 @pytest.fixture(autouse=True)
 def cleanup_db(db_session):
@@ -69,4 +71,3 @@ def token_valid_user(client):
     register(client, email, password)
     res = login(client, email, password)
     return get_token_from_response(res)
-

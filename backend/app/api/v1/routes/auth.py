@@ -27,29 +27,25 @@ from app.core.rate_limiter import check_rate_limit
 from app.services.email import send_activation_email
 from app.core.log_decorator import audit_log
 from app.crud.user import (
-    create_user, get_user_by_email, 
-    increment_login_attempts, reset_login_attempts
+    create_user,
+    get_user_by_email,
+    increment_login_attempts,
+    reset_login_attempts,
 )
-from app.core.constants import (
-    LOGIN_RATE_LIMIT_PREFIX, 
-    REGISTER_RATE_LIMIT_PREFIX
-)
+from app.core.constants import LOGIN_RATE_LIMIT_PREFIX, REGISTER_RATE_LIMIT_PREFIX
 from app.core.redis import redis_client
 from app.db.session import get_db
 from app.core import get_settings
 from app.models.users.user import User
-from app.schemas.auth import (
-    TokenResponse,
-    UserLoginRequest,
-    UserRegisterRequest
-)
-from app.schemas.users import UserResponse 
+from app.schemas.auth import TokenResponse, UserLoginRequest, UserRegisterRequest
+from app.schemas.users import UserResponse
 from datetime import datetime
 
 settings = get_settings()
 router = APIRouter(prefix="/auth", tags=["Auth"])
 logger = logging.getLogger("audit")
 DISPOSABLE_DOMAINS = {"tempmail.com", "10minutemail.com", "mailinator.com"}
+
 
 @router.post(
     "/register",
@@ -81,7 +77,9 @@ async def register_user(
 
     # Honeypot bot detection
     if not check_honeypot_field(honeypot):
-        logger.warning("[BOT] Honeypot triggered", extra={"ip": ip, "user_agent": user_agent})
+        logger.warning(
+            "[BOT] Honeypot triggered", extra={"ip": ip, "user_agent": user_agent}
+        )
         raise HTTPException(status_code=400, detail="Bot activity detected.")
 
     # Rate limiting
@@ -91,11 +89,15 @@ async def register_user(
 
     # Disposable email check
     if is_disposable_email(email, DISPOSABLE_DOMAINS):
-        raise HTTPException(status_code=400, detail="Disposable email addresses are not allowed.")
+        raise HTTPException(
+            status_code=400, detail="Disposable email addresses are not allowed."
+        )
 
     # DNS MX check
     if not validate_email_mx(email):
-        raise HTTPException(status_code=400, detail="Invalid email domain (MX check failed).")
+        raise HTTPException(
+            status_code=400, detail="Invalid email domain (MX check failed)."
+        )
 
     # Uniqueness check
     if get_user_by_email(db, email):
@@ -110,7 +112,9 @@ async def register_user(
     new_user = create_user(db, payload, hashed_pw, full_name)
 
     # Email verification link
-    token = create_activation_token(db, new_user.id, settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+    token = create_activation_token(
+        db, new_user.id, settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+    )
     send_activation_email(email, token)
 
     # Audit log
@@ -149,7 +153,9 @@ async def login_user(
     rate_key = f"{LOGIN_RATE_LIMIT_PREFIX}:{ip}"
     if not check_rate_limit(LOGIN_RATE_LIMIT_PREFIX, ip):
         logger.warning("[RATELIMIT] Too many login attempts", extra={"ip": ip})
-        raise HTTPException(status_code=429, detail="Too many login attempts. Try again later.")
+        raise HTTPException(
+            status_code=429, detail="Too many login attempts. Try again later."
+        )
 
     # Fetch user
     user = get_user_by_email(db, email=email)
@@ -160,8 +166,12 @@ async def login_user(
         raise HTTPException(status_code=401, detail="Invalid credentials.")
 
     if not user.is_active:
-        logger.warning("[LOGIN_FAIL] Account is inactive or unverified.", extra={"ip": ip})
-        raise HTTPException(status_code=403, detail="Account is inactive or unverified.")
+        logger.warning(
+            "[LOGIN_FAIL] Account is inactive or unverified.", extra={"ip": ip}
+        )
+        raise HTTPException(
+            status_code=403, detail="Account is inactive or unverified."
+        )
 
     if not verify_password(payload.password, user.hashed_password):
         logger.warning("[LOGIN_FAIL] Invalid credentials", extra={"ip": ip})
@@ -186,7 +196,6 @@ async def login_user(
     )
 
     return TokenResponse(access_token=token, token_type=TOKEN_TYPE_BEARER)
-
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -216,7 +225,9 @@ async def logout_user(
 
         ttl = exp_timestamp - int(datetime.utcnow().timestamp())
         if ttl <= 0:
-            logger.info("[LOGOUT] Token already expired", extra={"user_id": user.id, "ip": ip})
+            logger.info(
+                "[LOGOUT] Token already expired", extra={"user_id": user.id, "ip": ip}
+            )
             return  # Already expired, consider it logged out
 
         redis_key = f"{TOKEN_BLACKLIST_PREFIX}{jti}"
@@ -224,8 +235,12 @@ async def logout_user(
         if redis_client:
             redis_client.setex(redis_key, ttl, "true")
         else:
-            logger.warning("[LOGOUT] Redis unavailable", extra={"user_id": user.id, "ip": ip})
-            raise HTTPException(status_code=503, detail="Logout temporarily unavailable")
+            logger.warning(
+                "[LOGOUT] Redis unavailable", extra={"user_id": user.id, "ip": ip}
+            )
+            raise HTTPException(
+                status_code=503, detail="Logout temporarily unavailable"
+            )
 
         logger.info(
             "[LOGOUT] Token blacklisted",
@@ -234,7 +249,7 @@ async def logout_user(
                 "user_email": user.email,
                 "ip": ip,
                 "user_agent": user_agent,
-                "request_id": getattr(request.state, 'request_id', None),
+                "request_id": getattr(request.state, "request_id", None),
             },
         )
 
@@ -253,7 +268,7 @@ async def get_me(
 ) -> UserResponse:
     """
     Returns info about the currently authenticated user.
-    
+
     - Requires valid JWT Bearer Token
     - Includes IP logging and user agent
     - Returns sanitized user info

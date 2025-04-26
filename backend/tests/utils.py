@@ -8,6 +8,7 @@ from starlette.responses import Response
 def make_email_str(username: str) -> str:
     return f"{username}@protonmail.com"
 
+
 def register(
     client: TestClient,
     email: str,
@@ -16,15 +17,10 @@ def register(
     role_id: int = 1,  # default = reporter
 ) -> Response:
     """Register a new user with optional role_id (for testing purposes)."""
-    payload = {
-        "email": email.strip(),
-        "password": password,
-        "role_id": role_id
-    }
+    payload = {"email": email.strip(), "password": password, "role_id": role_id}
     if full_name is not None:
         payload["full_name"] = full_name
     return client.post("/api/v1/auth/register", json=payload)
-
 
 
 def login(client: TestClient, email: str, password: str) -> Response:

@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr
 
+
 class UserResponse(BaseModel):
     """Schema for user data returned after registration or login."""
 
@@ -15,7 +16,9 @@ class UserResponse(BaseModel):
 
     class Config:
         """Enable ORM mode for Pydantic models."""
+
         from_attributes = True
+
 
 class UserOutPaginated(BaseModel):
     total: int

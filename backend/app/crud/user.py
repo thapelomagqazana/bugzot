@@ -27,7 +27,9 @@ def get_user_by_email(db: Session, email: str) -> User | None:
     )  # Case-insensitive match
 
 
-def create_user(db, payload: UserRegisterRequest, hashed_pw: str, full_name: str | None = None) -> User:
+def create_user(
+    db, payload: UserRegisterRequest, hashed_pw: str, full_name: str | None = None
+) -> User:
     """
     Insert new user record with defaults and return it.
     """
@@ -45,19 +47,21 @@ def create_user(db, payload: UserRegisterRequest, hashed_pw: str, full_name: str
 
 def get_user_by_id(db: Session, user_id: int) -> User | None:
     """Retrieve a user by their ID from the database."""
-    return db.query(User).filter(
-        User.id == user_id, 
-        User.is_active == True, 
-        User.is_deleted == False).first()
+    return (
+        db.query(User)
+        .filter(User.id == user_id, User.is_active == True, User.is_deleted == False)
+        .first()
+    )
+
 
 def increment_login_attempts(db: Session, user: User):
     """Increment login attempts by 1."""
     user.login_attempts += 1
     db.commit()
 
+
 def reset_login_attempts(db: Session, user: User):
     """Reset the login attempts."""
     user.login_attempts = 0
     user.last_login = datetime.utcnow()
     db.commit()
-
