@@ -25,3 +25,15 @@ class UserOutPaginated(BaseModel):
     limit: int
     offset: int
     data: List[UserResponse]
+
+
+class UserProfileOut(BaseModel):
+    id: int
+    email: EmailStr
+    full_name: Optional[str] = None
+    created_at: datetime
+    last_login: Optional[datetime] = None
+    role_id: int
+
+    class Config:
+        orm_mode = True

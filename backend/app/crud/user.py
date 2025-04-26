@@ -38,6 +38,7 @@ def create_user(
         hashed_password=hashed_pw,
         full_name=full_name,
         role_id=payload.role_id,  # Default to 'reporter' or equivalent
+        is_active=payload.active,
     )
     db.add(user)
     db.commit()

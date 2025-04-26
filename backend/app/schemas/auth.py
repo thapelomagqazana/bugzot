@@ -12,6 +12,7 @@ class UserRegisterRequest(BaseModel):
     password: str = Field(..., min_length=8, max_length=128)
     full_name: Optional[str] = Field(default=None, max_length=100)
     role_id: int = Field(default=DEFAULT_ROLE_ID)
+    active: bool = Field(default=True)
 
 
 class UserLoginRequest(BaseModel):

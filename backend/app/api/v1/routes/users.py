@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status, Path
 from sqlalchemy.orm import Session, selectinload
 from typing import Optional
 from app.db.session import get_db
 from app.core.security import get_current_user
+from app.crud.user import get_user_by_id
 from app.models.users.user import User
-from app.schemas.users import UserOutPaginated
+from app.schemas.users import UserOutPaginated, UserProfileOut
 from app.api.v1.dependencies import require_admin
 from app.core.log_decorator import audit_log
 
@@ -61,3 +62,33 @@ async def list_users(
     total = query.count()
 
     return UserOutPaginated(total=total, limit=limit, offset=offset, data=users)
+
+
+@router.get("/{user_id}", response_model=UserProfileOut, status_code=status.HTTP_200_OK)
+@audit_log("View User Profile")
+async def get_user_profile(
+    request: Request,
+    user_id: int = Path(..., gt=0, description="ID of the user to fetch"),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """
+    Fetch a user's profile.
+
+    - Admins can view any profile.
+    - Users can view their own profile only.
+    """
+
+    user = get_user_by_id(db, user_id=user_id)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    if not (current_user.role.name.lower() == "admin" or current_user.id == user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
+
+    return user

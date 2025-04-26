@@ -14,10 +14,16 @@ def register(
     email: str,
     password: str,
     full_name: str | None = None,
-    role_id: int = 1,  # default = reporter
+    role_id: int = 1,
+    active: bool = True,
 ) -> Response:
     """Register a new user with optional role_id (for testing purposes)."""
-    payload = {"email": email.strip(), "password": password, "role_id": role_id}
+    payload = {
+        "email": email.strip(),
+        "password": password,
+        "role_id": role_id,
+        "active": active,
+    }
     if full_name is not None:
         payload["full_name"] = full_name
     return client.post("/api/v1/auth/register", json=payload)
@@ -82,3 +88,11 @@ def get_token_from_response(res) -> str:
         str: Access token from the response.
     """
     return res.json()["access_token"]
+
+
+def get_admin_token_header(res):
+    return {"Authorization": f"Bearer {res.json()["access_token"]}"}
+
+
+def get_user_token_header(res):
+    return {"Authorization": f"Bearer {res.json()["access_token"]}"}

@@ -1,24 +1,26 @@
 from jose import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 from app.main import app
 from app.core import get_settings
-from tests.utils import register, login, get_user_from_db, make_email_str
+from tests.utils import (
+    register,
+    login,
+    get_user_from_db,
+    make_email_str,
+    get_admin_token_header,
+)
 
 client = TestClient(app)
 settings = get_settings()
 ENDPOINT = "/api/v1/users"
 
 
-def get_admin_token_header(res):
-    return {"Authorization": f"Bearer {res.json()["access_token"]}"}
-
-
 def generate_token(
     payload: dict, secret: str = settings.JWT_SECRET_KEY, expire_in_minutes=5
 ):
     payload = payload.copy()
-    payload["exp"] = datetime.utcnow() + timedelta(minutes=expire_in_minutes)
+    payload["exp"] = datetime.now(timezone.utc) + timedelta(minutes=expire_in_minutes)
     payload.setdefault("jti", "dummy-jti-1234")
     return jwt.encode(payload, secret, algorithm="HS256")
 
