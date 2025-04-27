@@ -3,6 +3,12 @@
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from starlette.responses import Response
+from jose import jwt
+import time
+from datetime import datetime, timedelta
+from app.core import get_settings
+
+settings = get_settings()
 
 
 def make_email_str(username: str) -> str:
@@ -96,3 +102,27 @@ def get_admin_token_header(res):
 
 def get_user_token_header(res):
     return {"Authorization": f"Bearer {res.json()["access_token"]}"}
+
+
+def create_test_token(user_id: int, expire_in_minutes: int = 15, secret_override: str = None) -> str:
+    """
+    Helper function to create a JWT token for testing purposes.
+    
+    Args:
+        user_id (int): ID of the user for whom the token is generated.
+        expire_in_minutes (int): Minutes after which the token expires. Defaults to 15 minutes.
+        secret_override (str): If provided, use this instead of default secret (used for invalid signature tests).
+
+    Returns:
+        str: Encoded JWT token.
+    """
+    secret = secret_override or settings.JWT_SECRET_KEY
+    now = datetime.utcnow()
+    payload = {
+        "sub": str(user_id),
+        "exp": now + timedelta(minutes=expire_in_minutes),
+        "iat": now,
+        "jti": f"test-jti-{time.time()}"  # simple unique jti
+    }
+    token = jwt.encode(payload, secret, algorithm="HS256")
+    return token

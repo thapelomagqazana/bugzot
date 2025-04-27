@@ -1,11 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status, Path
 from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.exc import IntegrityError
 from typing import Optional
+from datetime import datetime, timezone
 from app.db.session import get_db
+from app.crud.user import get_user_by_email
 from app.core.security import get_current_user
 from app.crud.user import get_user_by_id
 from app.models.users.user import User
-from app.schemas.users import UserOutPaginated, UserProfileOut
+from app.schemas.users import (
+    UserOutPaginated, UserProfileOut,
+    UserResponse, UserUpdateIn
+)
 from app.api.v1.dependencies import require_admin
 from app.core.log_decorator import audit_log
 
@@ -89,6 +95,55 @@ async def get_user_profile(
     if not (current_user.role.name.lower() == "admin" or current_user.id == user_id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
+
+    return user
+
+@router.put(
+    "/{id}",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Update a user profile",
+)
+@audit_log("Update User Profile")
+async def update_user_profile(
+    id: int,
+    user_update: UserUpdateIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """
+    Update a user's profile by ID. Admins only.
+    Supports partial updates (PATCH-like behavior).
+    """
+    user = db.query(User).filter(User.id == id, User.is_deleted == False).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
+
+    # Optional fields: only update what is provided
+    update_data = user_update.dict(exclude_unset=True)
+
+    if "email" in update_data:
+        # Uniqueness check
+        if get_user_by_email(db, update_data["email"]):
+            raise HTTPException(status_code=409, detail="Email already registered.")
+
+    # Apply updates
+    for field, value in update_data.items():
+        setattr(user, field, value)
+
+    user.updated_at = datetime.now(timezone.utc)
+
+    try:
+        db.commit()
+        db.refresh(user)
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid role_id or data constraint violation."
         )
 
     return user

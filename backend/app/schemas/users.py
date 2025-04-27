@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, validator
 
 
 class UserResponse(BaseModel):
@@ -37,3 +37,21 @@ class UserProfileOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class UserUpdateIn(BaseModel):
+    email: Optional[EmailStr] = Field(None, description="New email address.")
+    full_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    is_active: Optional[bool] = Field(None, description="Activate/Deactivate user.")
+    role_id: Optional[int] = Field(None, description="Change user's role.")
+
+    class Config:
+        from_attributes = True
+        extra = "forbid"
+
+    
+    @validator('full_name')
+    def full_name_must_not_be_whitespace(cls, v):
+        if v is not None and v.strip() == "":
+            raise ValueError('Full name must not be empty or only whitespace.')
+        return v
+

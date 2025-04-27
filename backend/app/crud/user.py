@@ -1,7 +1,8 @@
 """CRUD operations related to the User model."""
 
 from sqlalchemy.orm import Session
-
+from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException, status
 from app.models.users.user import User
 from app.schemas.auth import UserRegisterRequest
 from datetime import datetime
@@ -41,8 +42,15 @@ def create_user(
         is_active=payload.active,
     )
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    try:
+        db.commit()
+        db.refresh(user)
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid role_id or data constraint violation."
+        )
     return user
 
 
