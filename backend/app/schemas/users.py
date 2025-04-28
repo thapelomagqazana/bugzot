@@ -13,6 +13,7 @@ class UserResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: Optional[datetime]
+    deleted_at: Optional[datetime]
 
     class Config:
         """Enable ORM mode for Pydantic models."""
@@ -38,6 +39,7 @@ class UserProfileOut(BaseModel):
     class Config:
         orm_mode = True
 
+
 class UserUpdateIn(BaseModel):
     email: Optional[EmailStr] = Field(None, description="New email address.")
     full_name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -48,10 +50,15 @@ class UserUpdateIn(BaseModel):
         from_attributes = True
         extra = "forbid"
 
-    
-    @validator('full_name')
+    @validator("full_name")
     def full_name_must_not_be_whitespace(cls, v):
         if v is not None and v.strip() == "":
-            raise ValueError('Full name must not be empty or only whitespace.')
+            raise ValueError("Full name must not be empty or only whitespace.")
         return v
 
+
+class UserDeleteResponse(BaseModel):
+    id: int
+    email: str
+    deleted_at: str  # ISO Timestamp
+    message: str = "User account has been deactivated successfully."

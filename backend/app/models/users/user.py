@@ -43,6 +43,9 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
 
+    # Soft-delete timestamp
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
     # Tracking timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
