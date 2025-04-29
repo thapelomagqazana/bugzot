@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.api.v1.routes import auth, users, roles
+from app.api.v1.routes import auth, users, roles, products
 from app.core.logging_config import setup_logging
 from app.middleware.logging_middleware import LoggingContextMiddleware
 from app.core import get_settings
@@ -41,6 +41,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix=VERSION_ONE_PREFIX)
 app.include_router(users.router, prefix=VERSION_ONE_PREFIX)
 app.include_router(roles.router, prefix=VERSION_ONE_PREFIX)
+app.include_router(products.router, prefix=VERSION_ONE_PREFIX)
 
 
 @app.get("/", tags=["Health"])

@@ -5,6 +5,10 @@ from sqlalchemy.orm import Session
 from starlette.responses import Response
 from jose import jwt
 import time
+from app.models.products import Product
+from app.db.session import get_db
+import random
+import string
 from datetime import datetime, timedelta
 from app.core import get_settings
 
@@ -126,3 +130,22 @@ def create_test_token(user_id: int, expire_in_minutes: int = 15, secret_override
     }
     token = jwt.encode(payload, secret, algorithm="HS256")
     return token
+
+def make_product(db, name=None, description=None, is_active=True, is_deleted=False, category_id=None):
+    """
+    Quickly create a test Product in the database.
+    """
+    name = name or "Product_" + ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    description = description or "Test description"
+    
+    product = Product(
+        name=name,
+        description=description,
+        is_active=is_active,
+        is_deleted=is_deleted,
+        category_id=category_id,
+    )
+    db.add(product)
+    db.commit()
+    db.refresh(product)
+    return product
